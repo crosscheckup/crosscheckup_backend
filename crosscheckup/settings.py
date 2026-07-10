@@ -150,6 +150,9 @@ REST_FRAMEWORK = {
     ),
 }
 
+BREVO_API_KEY = config('BREVO_API_KEY', default='')
+BREVO_SENDER_EMAIL = config('BREVO_SENDER_EMAIL', default='')
+BREVO_SENDER_NAME = config('BREVO_SENDER_NAME', default='Enterprise Auth')
 # --------------------------------------------------------------------------
 # Email (Gmail SMTP)
 # --------------------------------------------------------------------------
