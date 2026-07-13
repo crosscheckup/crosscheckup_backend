@@ -23,5 +23,6 @@ urlpatterns = [
 
     # Authentication app -> everything under /auth/
     path('auth/', include('authentication.urls')),
+    path('homepage/', include('homepage.urls')),
 
 ]

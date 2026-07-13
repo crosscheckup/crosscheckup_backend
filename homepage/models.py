@@ -1,0 +1,37 @@
+from django.db import models
+
+
+class Booking(models.Model):
+    """
+    A single inspection-booking request submitted from the public form.
+    """
+
+    STATUS_BOOKED = 'booked'
+    STATUS_CANCELLED = 'cancelled'
+    STATUS_COMPLETED = 'completed'
+
+    STATUS_CHOICES = [
+        (STATUS_BOOKED, 'Booked'),
+        (STATUS_CANCELLED, 'Cancelled'),
+        (STATUS_COMPLETED, 'Completed'),
+    ]
+
+    first_name = models.CharField(max_length=150)
+    last_name = models.CharField(max_length=150)
+    email = models.EmailField(db_index=True)
+    phone = models.CharField(max_length=20)
+    city = models.CharField(max_length=150)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_BOOKED)
+
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created']
+
+    def __str__(self):
+        return f'{self.first_name} {self.last_name} ({self.email}) - {self.status}'
+
+    @property
+    def full_name(self):
+        return f'{self.first_name} {self.last_name}'.strip()

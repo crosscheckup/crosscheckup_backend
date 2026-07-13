@@ -41,7 +41,8 @@ INSTALLED_APPS = [
 
     # 3rd party
     'rest_framework',
-
+    'corsheaders',
+'homepage',
     # local apps
     'authentication',
 ]
@@ -49,6 +50,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -168,6 +170,22 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # Used to build the verification link sent in the email
 FRONTEND_URL = config('FRONTEND_URL', default='http://127.0.0.1:8000')
+
+# --------------------------------------------------------------------------
+# CORS (React frontend)
+# --------------------------------------------------------------------------
+# Comma-separated list in the env var, e.g.:
+# CORS_ALLOWED_ORIGINS=http://localhost:3000,https://your-react-app.vercel.app
+CORS_ALLOWED_ORIGINS = config(
+    'CORS_ALLOWED_ORIGINS',
+    default='http://localhost:3000,http://127.0.0.1:3000',
+    cast=lambda v: [origin.strip() for origin in v.split(',') if origin.strip()],
+)
+
+# Set to True only if the frontend needs to send cookies / auth headers
+# that rely on browser credentials (e.g. session cookies). Not needed if
+# you're only sending a custom Authorization/token header.
+CORS_ALLOW_CREDENTIALS = config('CORS_ALLOW_CREDENTIALS', default=False, cast=bool)
 
 # --------------------------------------------------------------------------
 # Custom auth token behaviour
