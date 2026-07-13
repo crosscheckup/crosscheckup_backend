@@ -178,7 +178,7 @@ FRONTEND_URL = config('FRONTEND_URL', default='http://127.0.0.1:8000')
 # CORS_ALLOWED_ORIGINS=http://localhost:3000,https://your-react-app.vercel.app
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
-    default='http://localhost:3000,http://127.0.0.1:3000',
+    default='http://localhost:3000,http://127.0.0.1:3000,https://crosscheckup-frontend.vercel.app',
     cast=lambda v: [origin.strip() for origin in v.split(',') if origin.strip()],
 )
 
