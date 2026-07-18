@@ -69,6 +69,36 @@ class InspectionListView(APIView):
         return Response({'inspections': BookingSerializer(bookings, many=True).data})
 
 
+class SuperAdminInspectionListView(APIView):
+    """Base list view for super-admin booking queues."""
+
+    assignment_filter = {}
+
+    def get(self, request):
+        if not request.user.is_super_admin:
+            return Response(
+                {'detail': 'Only super admins can view this inspection queue.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        bookings = Booking.objects.filter(**self.assignment_filter).select_related(
+            'assigned_admin', 'assigned_engineer'
+        )
+        return Response({'inspections': BookingSerializer(bookings, many=True).data})
+
+
+class ActiveInspectionListView(SuperAdminInspectionListView):
+    """Bookings that still need to be assigned to an admin."""
+
+    assignment_filter = {'assigned_admin__isnull': True}
+
+
+class AssignedInspectionListView(SuperAdminInspectionListView):
+    """Bookings that have already been assigned to an admin."""
+
+    assignment_filter = {'assigned_admin__isnull': False}
+
+
 class AssignInspectionAdminView(APIView):
     """Super admin assigns an inspection booking to an admin/manager."""
 

@@ -103,6 +103,13 @@ class LoginView(APIView):
         )
 
 
+class ProfileView(APIView):
+    """Return the complete authenticated user's profile and access level."""
+
+    def get(self, request):
+        return Response({'user': UserSerializer(request.user).data}, status=status.HTTP_200_OK)
+
+
 class LogoutView(APIView):
     """
     POST /auth/logout/  (protected — requires Authorization: Bearer <token>)
@@ -143,23 +150,109 @@ class AdminPromotionView(APIView):
             return Response({'detail': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
 
 
+class AdminListView(APIView):
+    """List admins available for a super admin to receive an inspection."""
+
+    def get(self, request):
+        if not request.user.is_super_admin:
+            return Response({'detail': 'Only super admins can view admins.'}, status=status.HTTP_403_FORBIDDEN)
+
+        admins = User.objects.filter(sensitivity=User.SENSITIVITY_ADMIN).order_by(
+            'first_name', 'last_name'
+        )
+        return Response({'admins': UserSerializer(admins, many=True).data})
+
+
+class UserListView(APIView):
+    """List user accounts for super-admin role management."""
+
+    def get(self, request):
+        if not request.user.is_super_admin:
+            return Response({'detail': 'Only super admins can view users.'}, status=status.HTTP_403_FORBIDDEN)
+
+        users = User.objects.select_related('manager').order_by('first_name', 'last_name')
+        return Response({'users': UserSerializer(users, many=True).data})
+
+
+class UserRoleUpdateView(APIView):
+    """Allow a super admin to change a user's operational role."""
+
+    ROLE_SENSITIVITY = {
+        'user': User.SENSITIVITY_USER,
+        'engineer': User.SENSITIVITY_ENGINEER,
+        'admin': User.SENSITIVITY_ADMIN,
+    }
+
+    def patch(self, request, user_id):
+        if not request.user.is_super_admin:
+            return Response({'detail': 'Only super admins can update roles.'}, status=status.HTTP_403_FORBIDDEN)
+
+        user = AdminPromotionView._get_user(user_id)
+        if isinstance(user, Response):
+            return user
+        if user.is_super_admin:
+            return Response({'detail': 'Super admin roles cannot be changed here.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        role = request.data.get('role')
+        if role not in self.ROLE_SENSITIVITY:
+            return Response({'detail': 'role must be user, engineer, or admin.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        manager = None
+        if role == 'engineer':
+            manager = AdminPromotionView._get_user(request.data.get('manager_id'))
+            if isinstance(manager, Response) or not manager.is_admin_manager:
+                return Response({'detail': 'manager_id must belong to an admin.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.sensitivity = self.ROLE_SENSITIVITY[role]
+        user.manager = manager
+        if role == 'engineer':
+            user.is_available = True
+        user.save(update_fields=['sensitivity', 'manager', 'is_available'])
+        return Response({'message': 'User role updated.', 'user': UserSerializer(user).data})
+
+
+class UserDeleteView(APIView):
+    """Allow a super admin to permanently delete a non-super-admin account."""
+
+    def delete(self, request, user_id):
+        if not request.user.is_super_admin:
+            return Response({'detail': 'Only super admins can delete users.'}, status=status.HTTP_403_FORBIDDEN)
+
+        user = AdminPromotionView._get_user(user_id)
+        if isinstance(user, Response):
+            return user
+        if user.is_super_admin:
+            return Response({'detail': 'Super admin accounts cannot be deleted here.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class EngineerAssignmentView(APIView):
-    """Put a registered user in the authenticated admin's engineer group."""
+    """Put a registered user in an admin's engineer group."""
 
     def post(self, request):
-        if not request.user.is_admin_manager:
-            return Response({'detail': 'Only admins can add engineers to their group.'}, status=status.HTTP_403_FORBIDDEN)
+        if request.user.is_super_admin:
+            manager = AdminPromotionView._get_user(request.data.get('manager_id'))
+            if isinstance(manager, Response):
+                return Response({'detail': 'A manager_id for an admin is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            if not manager.is_admin_manager:
+                return Response({'detail': 'manager_id must belong to an admin.'}, status=status.HTTP_400_BAD_REQUEST)
+        elif request.user.is_admin_manager:
+            manager = request.user
+        else:
+            return Response({'detail': 'Only admins or super admins can assign engineers.'}, status=status.HTTP_403_FORBIDDEN)
 
         user = AdminPromotionView._get_user(request.data.get('user_id'))
         if isinstance(user, Response):
             return user
         if user.is_super_admin or user.is_admin_manager:
             return Response({'detail': 'Admins and super admins cannot be assigned as engineers.'}, status=status.HTTP_400_BAD_REQUEST)
-        if user.manager_id and user.manager_id != request.user.id:
+        if user.manager_id and user.manager_id != manager.id:
             return Response({'detail': 'This engineer already belongs to another admin.'}, status=status.HTTP_400_BAD_REQUEST)
 
         user.sensitivity = User.SENSITIVITY_ENGINEER
-        user.manager = request.user
+        user.manager = manager
         user.is_available = True
         user.save(update_fields=['sensitivity', 'manager', 'is_available'])
         return Response({'message': 'Engineer assigned to your group.', 'user': UserSerializer(user).data})
