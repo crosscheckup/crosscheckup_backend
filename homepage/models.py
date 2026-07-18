@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
 
+from .storage import InspectionDocumentStorage
+
 
 class Booking(models.Model):
     """
@@ -8,11 +10,13 @@ class Booking(models.Model):
     """
 
     STATUS_BOOKED = 'booked'
+    STATUS_PROCESSING = 'processing'
     STATUS_CANCELLED = 'cancelled'
     STATUS_COMPLETED = 'completed'
 
     STATUS_CHOICES = [
         (STATUS_BOOKED, 'Booked'),
+        (STATUS_PROCESSING, 'Inspection processing'),
         (STATUS_CANCELLED, 'Cancelled'),
         (STATUS_COMPLETED, 'Completed'),
     ]
@@ -36,6 +40,19 @@ class Booking(models.Model):
         blank=True,
         on_delete=models.SET_NULL,
         related_name='engineer_bookings',
+    )
+    customer_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='customer_bookings',
+    )
+    document = models.FileField(
+        upload_to='inspection_documents/',
+        storage=InspectionDocumentStorage(),
+        null=True,
+        blank=True,
     )
 
     created = models.DateTimeField(auto_now_add=True)

@@ -111,3 +111,26 @@ def send_booking_notification_email(booking):
         send_email(ADMIN_NOTIFICATION_EMAIL, 'Admin', subject, text, html)
     except Exception:
         logger.exception('Failed to send booking notification email to %s', ADMIN_NOTIFICATION_EMAIL)
+
+
+def send_inspection_account_email(user, password):
+    """Send credentials for the account created after an inspection begins."""
+    subject = 'Your Crosscheckup account is ready'
+    text = (
+        f'Hi {user.full_name},\n\n'
+        'Your inspection account has been created and is ready to use.\n\n'
+        f'Email: {user.email}\n'
+        f'Temporary password: {password}\n\n'
+        'Please log in and change your password as soon as possible.\n'
+    )
+    html = (
+        f'<p>Hi {user.full_name},</p>'
+        '<p>Your inspection account has been created and is ready to use.</p>'
+        f'<p><strong>Email:</strong> {user.email}<br>'
+        f'<strong>Temporary password:</strong> {password}</p>'
+        '<p>Please log in and change your password as soon as possible.</p>'
+    )
+    try:
+        send_email(user.email, user.full_name, subject, text, html)
+    except Exception:
+        logger.exception('Failed to send inspection account email to %s', user.email)

@@ -140,6 +140,41 @@ USE_TZ = True
 # Static files
 # --------------------------------------------------------------------------
 STATIC_URL = 'static/'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# Cloudflare R2 uses the S3 API. The supplied R2 URL includes the bucket
+# name, so the SDK endpoint is the account host and the bucket is configured
+# separately. Keep these credentials in the deployment environment only.
+R2_ENDPOINT_URL = config(
+    'R2_ENDPOINT_URL',
+    default='https://40446ca3c274079f8133e954f2ec5d30.r2.cloudflarestorage.com',
+)
+R2_BUCKET_NAME = config('R2_BUCKET_NAME', default='crosscheckup')
+R2_ACCESS_KEY_ID = config('R2_ACCESS_KEY_ID', default='')
+R2_SECRET_ACCESS_KEY = config('R2_SECRET_ACCESS_KEY', default='')
+
+if R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY:
+    STORAGES = {
+        'default': {
+            'BACKEND': 'storages.backends.s3.S3Storage',
+            'OPTIONS': {
+                'access_key': R2_ACCESS_KEY_ID,
+                'secret_key': R2_SECRET_ACCESS_KEY,
+                'bucket_name': R2_BUCKET_NAME,
+                'endpoint_url': R2_ENDPOINT_URL,
+                'region_name': 'auto',
+                'addressing_style': 'path',
+                'default_acl': None,
+                'file_overwrite': False,
+                # Reports remain private; Django generates temporary signed URLs.
+                'querystring_auth': True,
+            },
+        },
+        'staticfiles': {
+            'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+        },
+    }
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # --------------------------------------------------------------------------
