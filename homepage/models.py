@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 
 class Booking(models.Model):
@@ -22,6 +23,20 @@ class Booking(models.Model):
     phone = models.CharField(max_length=20)
     city = models.CharField(max_length=150)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_BOOKED)
+    assigned_admin = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='admin_bookings',
+    )
+    assigned_engineer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='engineer_bookings',
+    )
 
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)

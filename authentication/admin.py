@@ -7,20 +7,21 @@ from .models import AuthToken, EmailVerificationToken, User
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     ordering = ['email']
-    list_display = ['email', 'first_name', 'last_name', 'is_active', 'is_staff', 'date_joined']
+    list_display = ['email', 'first_name', 'last_name', 'sensitivity', 'manager', 'is_available', 'is_active', 'is_staff', 'date_joined']
     search_fields = ['email', 'first_name', 'last_name']
     readonly_fields = ['date_joined']
 
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
         ('Personal info', {'fields': ('first_name', 'last_name')}),
+        ('Authorization', {'fields': ('sensitivity', 'manager', 'is_available')}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('date_joined',)}),
     )
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'first_name', 'last_name', 'password1', 'password2', 'is_active', 'is_staff'),
+            'fields': ('email', 'first_name', 'last_name', 'password1', 'password2', 'sensitivity', 'manager', 'is_available', 'is_active', 'is_staff'),
         }),
     )
 

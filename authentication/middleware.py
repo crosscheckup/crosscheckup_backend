@@ -10,7 +10,7 @@ class APITokenAuthMiddleware:
     Any request whose path contains "/api/" is automatically treated as a
     protected endpoint: a valid, non-expired token must be supplied as
 
-        Authorization: Token <key>
+        Authorization: Bearer <token>
 
     If the token is missing, invalid, or expired due to inactivity, the
     request is rejected with 401 before it ever reaches the view - so
@@ -36,10 +36,10 @@ class APITokenAuthMiddleware:
     def _authenticate(self, request):
         auth_header = request.headers.get('Authorization', '')
 
-        if not auth_header.startswith('Token '):
+        if not auth_header.startswith('Bearer '):
             return JsonResponse(
                 {'detail': 'Authentication credentials were not provided. '
-                           'Use header: Authorization: Token <key>'},
+                           'Use header: Authorization: Bearer <token>'},
                 status=401,
             )
 

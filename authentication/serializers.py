@@ -50,8 +50,12 @@ class LoginSerializer(serializers.Serializer):
 
 class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(read_only=True)
+    manager_id = serializers.IntegerField(source='manager.id', read_only=True)
 
     class Meta:
         model = User
-        fields = ['id', 'first_name', 'last_name', 'full_name', 'email', 'date_joined', 'is_active']
+        fields = [
+            'id', 'first_name', 'last_name', 'full_name', 'email', 'date_joined',
+            'is_active', 'sensitivity', 'is_available', 'manager_id',
+        ]
         read_only_fields = fields

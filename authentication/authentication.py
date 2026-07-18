@@ -12,10 +12,10 @@ class ExpiringTokenAuthentication(TokenAuthentication):
     settings.TOKEN_INACTIVITY_TIMEOUT_MINUTES of no API activity. Every
     successful authentication resets the inactivity clock.
 
-    Clients must send: Authorization: Token <key>
+    Clients must send: Authorization: Bearer <token>
     """
     model = AuthToken
-    keyword = 'Token'
+    keyword = 'Bearer'
 
     def authenticate_credentials(self, key):
         try:

@@ -23,6 +23,26 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
+    # Access to operational data is controlled by this application-level
+    # sensitivity value, not by Django's admin-site flags.
+    SENSITIVITY_USER = 0
+    SENSITIVITY_ENGINEER = 100
+    SENSITIVITY_ADMIN = 200
+    SENSITIVITY_SUPER_ADMIN = 1000
+
+    sensitivity = models.PositiveIntegerField(default=SENSITIVITY_USER, db_index=True)
+    is_available = models.BooleanField(
+        default=True,
+        help_text='Whether an engineer is currently available for a new order.',
+    )
+    manager = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='engineers',
+        help_text='The admin/manager responsible for this engineer.',
+    )
     date_joined = models.DateTimeField(auto_now_add=True)
 
     objects = UserManager()
@@ -40,6 +60,18 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def full_name(self):
         return f'{self.first_name} {self.last_name}'.strip()
+
+    @property
+    def is_super_admin(self):
+        return self.sensitivity >= self.SENSITIVITY_SUPER_ADMIN
+
+    @property
+    def is_admin_manager(self):
+        return self.sensitivity == self.SENSITIVITY_ADMIN
+
+    @property
+    def is_engineer(self):
+        return self.sensitivity == self.SENSITIVITY_ENGINEER
 
 
 class AuthToken(models.Model):
